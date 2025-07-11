@@ -1,0 +1,295 @@
+#masthead,
+#stap_1,
+#stap_2,
+#stap_3,
+#stap_4,
+#stap_5,
+#stap_6,
+#stap_7,
+#stap_8,
+#stap_9,
+#stap_10 {
+  display: none;
+}
+
+.cbvooraf {
+  font-weight: bold;
+  color: #011763;
+  margin-bottom: 5px;
+}
+.status {
+  color: #e3032c;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+}
+.tit {
+  color: #e3032c;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  font-weight: bold;
+  padding: 20px;
+}
+
+.hoofd {
+  display: grid;
+  grid-template-columns: 380px 1fr 2fr 1.3fr;
+  grid-template-rows: 85px 30px 0.9fr 1fr;
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+}
+.tip a {
+  /*color: #fabd15;*/
+  text-decoration-line: underline;
+  color: #e3032c;
+}
+.con1 {
+  grid-area: 1 / 1 / 4 / 2;
+}
+.con2 {
+  grid-area: 1 / 2 / 2 / 5;
+  padding-top: 10px;
+}
+.intro {
+  grid-area: 3 / 2 / 5 / 3;
+  margin-top: 20px;
+  padding-top: 20px;
+  font-size: 90%;
+}
+.item {
+  grid-area: 3 / 3 / 5 / 4;
+  min-height: 360px;
+  margin-top: 20px;
+  padding: 20px;
+}
+.tip {
+  grid-area: 3 / 4 / 5 / 5;
+  padding: 20px;
+  background-color: #82cae0;
+  color: #011763;
+  margin: 20px;
+  min-height: 300px;
+  margin-top: 5px;
+  margin-right: 26px;
+  border-radius: 5px;
+}
+.staptitel {
+  grid-area: 2 / 2 / 3 / 5;
+  padding: 10px;
+  padding-left: 0px;
+  font-weight: bold;
+  color: #011763;
+  font-size: 120%;
+}
+.faseinfo {
+  grid-area: 4 / 1 / 5 / 2;
+  padding-left: 10px;
+}
+
+@media only screen and (max-width: 768px) {
+  body {
+    .hoofd {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(5, 0.2fr);
+      grid-column-gap: 0px;
+      grid-row-gap: 0px;
+      grid-auto-rows: max-content;
+    }
+
+    .con1 {
+      grid-area: 1 / 1 / 2 / 3;
+    }
+    .con2 {
+      grid-area: 2 / 1 / 3 / 3;
+    }
+    .staptitel {
+      grid-area: 3 / 1 / 4 / 3;
+    }
+    .item {
+      grid-area: 4 / 1 / 5 / 2;
+    }
+    .tip {
+      grid-area: 4 / 2 / 5 / 3;
+    }
+    .intro {
+      grid-area: 5 / 1 / 6 / 3;
+    }
+  }
+}
+/*.hoofd {
+  display: grid;
+  grid-template-columns: 380px 400px 1fr;
+  grid-template-rows: 50px 350px 1fr;
+  grid-column-gap: 0px;
+  grid-row-gap: 10px;
+}
+
+.con1 {
+  grid-area: 1 / 1 / 3 / 2;
+}
+.tit {
+  color: #e3032c;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  font-weight: bold;
+  grid-area: 1 / 2 / 2 / 3;
+  padding: 20px;
+}
+.con2 {
+  grid-area: 2 / 2 / 3 / 3;
+}
+.tip {
+  grid-area: 1 / 3 / 4 / 4;
+  
+}
+.item {
+  grid-area: 3 / 1 / 4 / 3;
+  min-height: 300px;
+}
+*/
+.tiptitel {
+  color: #011763;
+}
+.tiptekst {
+  color: #011763;
+}
+
+/*checkboxes*/
+label {
+  display: inline;
+}
+
+.regular-checkbox {
+  display: none;
+}
+
+.regular-checkbox + label {
+  background-color: #fafafa;
+  border: 1px solid #cacece;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05),
+    inset 0px -15px 10px -12px rgba(0, 0, 0, 0.05);
+  margin: 1px;
+  margin-right: 5px;
+  padding: 6px 0px 0px 21px;
+  border-radius: 3px;
+  display: inline-block;
+  position: relative;
+  /* margin-bottom: 1em; */
+}
+
+.regular-checkbox + label:active,
+.regular-checkbox:checked + label:active {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05),
+    inset 0px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.regular-checkbox:checked + label {
+  background-color: #e9ecee;
+  border: 1px solid #adb8c0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05),
+    inset 0px -15px 10px -12px rgba(0, 0, 0, 0.05),
+    inset 15px 10px -12px rgba(255, 255, 255, 0.1);
+  color: #99a1a7;
+}
+
+.regular-checkbox:checked + label:after {
+  content: "\2714";
+  font-size: 18px;
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  color: #481249;
+}
+
+.tag {
+  position: relative;
+  top: 5px;
+  display: block;
+  float: left;
+}
+.rijvormgeving {
+  text-align: left;
+}
+
+input[type="checkbox"]:checked + label {
+  color: #481249;
+  opacity: 1;
+}
+
+input[type="checkbox"]:checked + label::before {
+  opacity: 0.8;
+}
+.tiplijst li {
+  margin-bottom: 5px;
+  font-size: 90%;
+}
+
+.tiplijst ul {
+  margin-bottom: 0;
+}
+
+.entry-content ul,
+.entry-content ol {
+  padding: 0 0 0 10px;
+  margin-bottom: 0px;
+}
+
+.itemverz {
+  display: table;
+  table-layout: fixed;
+  margin-bottom: 2px;
+}
+
+.blokkie {
+  display: table-cell;
+  width: 25px;
+  height: 25px;
+  vertical-align: top;
+}
+.textblok {
+  background-color: white;
+  padding-right: 2rem;
+  display: inline-block;
+  font-size: 90%;
+  /* line-height: 1.1; */
+}
+
+.thematooltip,
+.toeltip {
+  position: relative;
+  display: inline-block;
+}
+.itemaccent {
+  background-color: #c9e8fb;
+  padding-right: 2rem;
+  display: inline-block;
+  font-size: 90%;
+  line-height: 1.1;
+}
+
+.kopjeparent {
+  display: grid;
+  grid-template-columns: 380px 200px 1fr;
+  grid-template-rows: 40px;
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+}
+
+.kopjediv1 {
+  grid-area: 1 / 1 / 2 / 2;
+  padding: 10px;
+  padding-left: 20px;
+  font-weight: bold;
+  color: #011763;
+  font-size: 120%;
+}
+.kopjediv2 {
+  grid-area: 1 / 2 / 2 / 3;
+  padding: 10px;
+  padding-left: 0px;
+  font-weight: bold;
+  color: #011763;
+  font-size: 120%;
+}
+.kopjediv3 {
+  grid-area: 1 / 3 / 2 / 4;
+  text-align: right;
+  padding: 10px;
+}
