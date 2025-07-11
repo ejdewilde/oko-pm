@@ -8,14 +8,14 @@
  * @copyright    2021 Erik Jan de Wilde
  * @license      GPL v2 or later
  * Plugin Name:  OKO procesmonitor
- * Description:  Visuals voor OKO: procesmonitor. This plugin depends on Fluent CRM to be installed and active.
- * Version:      1.7
+ * Description:  Visuals for Oprgroeien in een Kasrijke Omgeving: de procestool. This plugin depends on Fluent CRM to be installed and active.
+ * Version:      1.0
  * Plugin URI:   https://www.hansei.nl/plugins
  * Author:       Erik Jan de Wilde, (c) 2024, HanSei
  * Text Domain:  oko-pm
  * Domain Path:  /languages/
  * Network:      true
- * Requires PHP: 5.3
+ * Requires PHP: 7.4
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,28 @@ defined('ABSPATH') or die('Hej då');
 ini_set('display_errors', 'Off');
 
 $plugin_root = substr(plugin_dir_path(__FILE__), 0, -5) . "/";
+add_action('plugins_loaded', 'oko_pm_laad_updater');
+
+function oko_pm_laad_updater()
+{
+    $pad = plugin_dir_path(__FILE__) . 'plugin-update-checker/plugin-update-checker.php';
+
+    if (file_exists($pad)) {
+        require_once $pad;
+
+        // Gebruik v5 factory
+        if (class_exists('\YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
+            $updateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker('https://github.com/ejdewilde/oko-pm/', __FILE__, 'oko-pm');
+
+            $updateChecker->setBranch('main');
+            $updateChecker->getVcsApi()->enableReleaseAssets();
+        } else {
+            error_log('PucFactory class niet gevonden.');
+        }
+    } else {
+        error_log('plugin-update-checker.php niet gevonden op: ' . $pad);
+    }
+}
 
 function oko_pm_shortcode()
 {
