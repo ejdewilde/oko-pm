@@ -8,7 +8,7 @@
  * @copyright    2021 Erik Jan de Wilde
  * @license      GPL v2 or later
  * Plugin Name:  OKO procesmonitor
- * Description:  Visuals for Oprgroeien in een Kasrijke Omgeving: de procestool. This plugin depends on Fluent CRM to be installed and active.
+ * Description:  Visuals for Oprgroeien in een Kansrijke Omgeving: de procestool. This plugin depends on Fluent CRM to be installed and active.
  * Version:      1.0
  * Plugin URI:   https://www.hansei.nl/plugins
  * Author:       Erik Jan de Wilde, (c) 2024, HanSei
@@ -67,10 +67,17 @@ function oko_pm_shortcode()
 
     $ta = $wat->get_interface();
 }
+function pm_overzicht_shortcode()
+{
+    include_once "pm_overzicht.php";
+    $wat = new PM_overzicht();
+    $ta  = $wat->get_interface();
+}
 
 function oko_pm_register_shortcode()
 {
     add_shortcode('show-oko-pm', 'oko_pm_shortcode');
+    add_shortcode('show-pm-overzicht', 'pm_overzicht_shortcode');
 }
 
 add_action('init', 'oko_pm_register_shortcode');

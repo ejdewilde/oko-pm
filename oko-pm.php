@@ -9,7 +9,7 @@ ini_set('display_errors', 'Off');
 function ts($test)
 { // for debug/development only
     echo '<pre>';
-    echo 'tijdelijke testgegevens:';
+    //echo 'tijdelijke testgegevens:';
     echo print_r($test, true);
     echo '</pre>';
 }
@@ -23,41 +23,54 @@ class OKO_pm
 {
     public $gebruiker_id;
     public $user_name;
-    public $gem = array();
+    public $gem = [];
     public $plugindir;
     public $url;
     public $start_tekst;
-    public $faseteksten = array();
-    public $stapteksten = array();
-    public $staptitels = array();
-    public $staptotalen = array();
-    public $scores = array();
+    public $faseteksten = [];
+    public $stapteksten = [];
+    public $staptitels  = [];
+    public $staptotalen = [];
+    public $scores      = [];
     public $tipstring;
     public $statusstring;
 
     public function __construct()
     {
-        include_once "interfaceDB.php";
+        //include_once "interfaceDB.php";
+
+        if ($_SERVER['HTTP_HOST'] == 'localhost') {
+                               //echo 'ja lokaal';
+            $this->lok = true; // voor de test
+        } else {
+            $this->lok = false;
+        }
+
         $this->gebruiker_id = get_current_user_id();
-        $current_user = wp_get_current_user();
-        $this->user_name = $current_user->data->display_name;
+        $current_user       = wp_get_current_user();
+        $this->user_name    = $current_user->data->display_name;
         //ts($current_user->data);
-        $this->gem = $this->maak_gemeente($current_user->data->user_email);
-        
-        if ($current_user->data->user_email == 'nikita.vantaarling@hotmail.com')
-        {
-        	$this->gem["naam"] = 'Noord-Veluwe HEP';
-    		$this->gem["id"] = 23;
-		}
-        
+
+        $this->gem = $this->haal_gemeente($current_user->data->user_email);
+
+        if ($current_user->data->user_email == 'nikita.vantaarling@hotmail.com') {
+            $this->gem["naam"] = 'Noord-Veluwe HEP';
+            $this->gem["id"]   = 23;
+        }
+
+        if ($this->lok) {
+            $this->gem['id']   = 90;             // voor de test
+            $this->gem['naam'] = 'Testgemeente'; // voor de test
+        }
+
         //ts($this->gem);
-        $this->plugindir = plugin_dir_url(__FILE__);
-        $this->url = $_SERVER['HTTP_HOST'];
+        $this->plugindir   = plugin_dir_url(__FILE__);
+        $this->url         = $_SERVER['HTTP_HOST'];
         $this->start_tekst = $this->maak_start_tekst();
         $this->maak_fase_stap_teksten();
-        $this->staptotalen = $this->maak_staptotalen();
-        $this->scores = $this->maak_scores();
-        $this->tipstring = $this->maak_tipstring();
+        $this->staptotalen  = $this->haal_max_score_per_stap();
+        $this->scores       = $this->maak_scores();
+        $this->tipstring    = $this->haal_tipstring();
         $this->statusstring = $this->maakstatusstring();
     }
     public function get_plaatje_url($post_id)
@@ -68,33 +81,16 @@ class OKO_pm
         $result = $this->poke_wpdb($zz, 'get_results');
         return $result[0]->guid;
     }
-    public function maak_gemeente($email)
-    {
-
-        return $this->haal_gemeente($email);
-    }
-
-    public function maak_staptotalen()
-    {
-        $data = $this->haal_max_score_per_stap();
-        return $data;
-
-    }
 
     public function maak_scores()
     {
         return isset($this->gem['id']) ? $this->haal_scores($this->gem['id']) : null;
     }
 
-    public function maak_tipstring()
-    {
-        return $this->haal_tipstring();
-    }
-
     public function maak_fase_stap_teksten()
     {
         $this->staptitels = $this->haal_stap_titels();
-        $fasenstappen = $this->haal_fasen_stappen();
+        $fasenstappen     = $this->haal_fasen_stappen();
 
         foreach ($fasenstappen as $soort => $inhs) {
             if ($soort == 1) {
@@ -114,18 +110,21 @@ class OKO_pm
     public function maakstatusstring()
     {
         $curus = isset($this->gem['id']) ? $this->haal_laatste_score($this->gem['id']) : null;
-        if (!isset($this->gem['naam'])) {
+        //ts($curus);
+        //ts($this->gem);
+
+        if (! isset($this->gem['naam'])) {
             return '<div class="status">Niemand ingelogd die voor deze gemeente de procesmonitor kan gebruiken</div>';
         }
 
         $stat = '<div class="status">Procesmonitor van <b>' . $this->gem["naam"] . '</b>';
 
         if ($curus) {
-            $uid = $curus["user_id"];
+            $uid       = $curus["user_id"];
             $user_info = get_userdata($uid);
-            $timst = $curus["archiefUniX"];
-            $naam = $user_info->data->display_name;
-            $dag = date("j M Y", $timst);
+            $timst     = $curus["archiefUniX"];
+            $naam      = $user_info->data->display_name;
+            $dag       = date("j M Y", $timst);
             $stat .= '. Laatst bijgewerkt door ' . $naam . ' op ' . $dag . '</div>';
         } else {
             $stat .= '. Nog geen invoer geweest voor deze gemeente</div>';
@@ -230,10 +229,10 @@ class OKO_pm
     public function haal_vinkjes($gid)
     {
 
-        $sql = "SELECT meta_value AS result FROM tool_usermeta WHERE gem_id = " . $gid . " ORDER BY umeta_id DESC LIMIT 1";
-        $data = $this->poke_wpdb($sql, "get_var");
+        $sql     = "SELECT meta_value AS result FROM tool_usermeta WHERE gem_id = " . $gid . " ORDER BY umeta_id DESC LIMIT 1";
+        $data    = $this->poke_wpdb($sql, "get_var");
         $gevinkt = [];
-        if (!empty($data) && isset($data['result'])) {
+        if (! empty($data) && isset($data['result'])) {
             $results = json_decode($data['result'], true);
             foreach ($results as $key => $val) { // code line 25, interfaceDB.php
                 if (substr($key, 0, 2) == 'cb') {
@@ -261,10 +260,10 @@ class OKO_pm
 
     public function haal_scores($gem)
     {
-        $sql = "SELECT meta_value AS result FROM tool_usermeta WHERE gem_id = " . $gem . " ORDER BY umeta_id DESC LIMIT 1;";
+        $sql         = "SELECT meta_value AS result FROM tool_usermeta WHERE gem_id = " . $gem . " ORDER BY umeta_id DESC LIMIT 1;";
         $result_json = $this->poke_wpdb($sql, "get_var");
-        $score = array_fill(1, 10, 0);
-        if (!empty($result_json)) {
+        $score       = array_fill(1, 10, 0);
+        if (! empty($result_json)) {
             $results = json_decode($result_json, true);
             foreach ($results as $key => $val) {
                 if (substr($key, 0, 2) == 'cb') {
@@ -281,24 +280,25 @@ class OKO_pm
     public function haal_laatste_score($gid)
     {
         $sql = "SELECT * FROM tool_usermeta WHERE gem_id = " . $gid . " AND archiefUnix IS NOT NULL ORDER BY umeta_id DESC LIMIT 1";
+        ts($sql);
         $data = $this->poke_wpdb($sql, "get_row");
         return $data;
     }
 
     public function haal_max_score_per_stap()
     {
-        $sql = "
-            SELECT CAST(a.meta_value AS UNSIGNED) AS stap, COUNT(t.ID) AS maks
+
+        $sql = "SELECT CAST(a.meta_value AS UNSIGNED) AS stap, COUNT(t.ID) AS maks
             FROM wp_posts t
             LEFT JOIN wp_postmeta h ON t.ID = h.post_id AND h.meta_key = 'volgorde'
             LEFT JOIN wp_postmeta a ON t.ID = a.post_id AND a.meta_key = 'stap'
             LEFT JOIN wp_postmeta v ON t.ID = v.post_id AND v.meta_key = 'vooraf_text'
             WHERE t.post_type = 'check' AND t.post_status = 'publish'
             GROUP BY a.meta_value
-            ORDER BY stap ASC
-        ";
+            ORDER BY stap ASC";
+
         $results = $this->poke_wpdb($sql, "get_results");
-        $scores = [];
+        $scores  = [];
         foreach ($results as $row) {
             $scores[$row['stap']] = (int) $row['maks'];
         }
@@ -314,7 +314,7 @@ class OKO_pm
             WHERE b.post_type = 'check' AND b.post_status = 'publish'
         ";
         $results = $this->poke_wpdb($sql, "get_results");
-        $tips = [];
+        $tips    = [];
         foreach ($results as $row) {
             $tips['cb' . $row['stap'] . '_' . $row['ID']] = $row['tip'];
         }
@@ -335,7 +335,7 @@ class OKO_pm
                 return $row;
             }
         }
-        return !empty($results) ? end($results) : false;
+        return ! empty($results) ? end($results) : false;
     }
 
     public function haal_gemeente($eml)
@@ -354,9 +354,9 @@ class OKO_pm
     public function haal_stap_titels()
     {
         global $wpdb;
-        $sql = "SELECT * FROM oko_stappen ORDER BY id;";
+        $sql     = "SELECT * FROM oko_stappen ORDER BY id;";
         $results = $this->poke_wpdb($sql, "get_results");
-        $titels = [];
+        $titels  = [];
         foreach ($results as $row) {
             $titels[$row['id']] = $row['tekst'];
         }
@@ -365,8 +365,8 @@ class OKO_pm
 
     public function haal_fasen_stappen()
     {
-        $sql = "SELECT post_title AS kop, post_content AS inhoud FROM wp_posts WHERE post_type = 'stap' AND post_status = 'publish' ORDER BY post_title;";
-        $results = $this->poke_wpdb($sql, "get_results");
+        $sql          = "SELECT post_title AS kop, post_content AS inhoud FROM wp_posts WHERE post_type = 'stap' AND post_status = 'publish' ORDER BY post_title;";
+        $results      = $this->poke_wpdb($sql, "get_results");
         $fasenStappen = [];
         foreach ($results as $row) {
             $nummer = substr($row["kop"], 5);

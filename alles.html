@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>OKO Voortgang per Gemeente</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2rem;
+        }
+
+        .heatmap rect {
+            stroke: #ccc;
+        }
+
+        .axis text {
+            font-size: 12px;
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .phase-label {
+            font-weight: bold;
+            text-anchor: middle;
+            font-size: 13px;
+            fill: #333;
+        }
+
+        .phase-line {
+            stroke: #999;
+            stroke-width: 1;
+        }
+
+        #details {
+            margin-top: 2rem;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Voortgang OKO per gemeente</h1>
+    <label for="filterJaar">Filter op startjaar:</label>
+    <select id="filterJaar">
+        <option value="">Alle jaren</option>
+    </select>
+    <div id="visualisatie"></div>
+    <div class="tooltip" id="tooltip"></div>
+    <div id="details">Klik op een vakje om meer informatie te tonen.</div>
+
+    <script>
+        const maxScores = { "1": 6, "2": 5, "3": 8, "4": 3, "5": 3, "6": 4, "7": 2, "8": 3, "9": 3, "10": 4 };
+        const stepNames = {
+            "1": "1. Interne structuur en draagvlak",
+            "2": "2. Preventiecoalitie en financiering",
+            "3": "3. Monitor voorbereiden",
+            "4": "4. Monitor uitvoeren",
+            "5": "5. Resultaten bespreken",
+            "6": "6. Dialoog voeren",
+            "7": "7. Doelen stellen",
+            "8": "8. Beleid vormen",
+            "9": "9. Interventies uitvoeren",
+            "10": "10. Evalueren"
+        };
+        const stepPrefixes = {
+            "1": "cb1_", "2": "cb2_", "3": "cb3_", "4": "cb4_", "5": "cb5_",
+            "6": "cb6_", "7": "cb7_", "8": "cb8_", "9": "cb9_", "10": "cb10_"
+        };
+
+        const phaseDefs = [
+            { name: "Voorbereiding", steps: ["1", "2"] },
+            { name: "Monitoring", steps: ["3", "4"] },
+            { name: "Analyse & Dialoog", steps: ["5", "6"] },
+            { name: "Beleidsvorming", steps: ["7", "8"] },
+            { name: "Uitvoering & Evaluatie", steps: ["9", "10"] }
+        ];
+
+        const gemeentenData = [{ "2": { "gem_id": "2", "naam": "Amersfoort", "sinds": "2018", "checks": ["cb1_10001", "cb1_10002", "cb1_10003", "cb2_10009", "cb3_10011", "cb3_10012", "cb3_10014", "cb5_10022", "cb6_10026", "cb6_10027", "cb7_10029", "cb7_10030", "cb8_10032", "cb8_10033", "cb9_10035", "cb9_10036", "cb10_10038", "cb10_10039", "cb10_10040", "cb10_10041"], "scores": { "1": 3, "2": 1, "3": 3, "4": 0, "5": 1, "6": 2, "7": 2, "8": 2, "9": 2, "10": 4 } }, "63": { "gem_id": "63", "naam": "Groningen", "sinds": "2024", "checks": ["cb1_24501", "cb1_24502", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24508", "cb2_24510", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb4_24519", "cb4_24520", "cb5_24522", "cb5_24523"], "scores": { "1": 5, "2": 3, "3": 5, "4": 2, "5": 2, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "6": { "gem_id": "6", "naam": "Dinkelland-Tubbergen", "sinds": null, "checks": [], "scores": { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "40": { "gem_id": "40", "naam": "Zwartewaterland", "sinds": "2023", "checks": ["cb1_24501", "cb1_24503", "cb1_24612"], "scores": { "1": 3, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "75": { "gem_id": "75", "naam": "Roermond", "sinds": "2024", "checks": ["cb1_24501", "cb1_24502", "cb1_24612"], "scores": { "1": 3, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "13": { "gem_id": "13", "naam": "Haarlemmermeer", "sinds": "2023", "checks": ["cb1_24501", "cb1_24502", "cb1_24504", "cb1_24612", "cb2_24507", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb3_24516", "cb3_24517", "cb3_24518", "cb4_24519", "cb4_24521", "cb5_24522", "cb5_24523", "cb5_24524", "cb6_24525", "cb6_24526", "cb6_24527"], "scores": { "1": 4, "2": 1, "3": 8, "4": 2, "5": 3, "6": 3, "7": 0, "8": 0, "9": 0, "10": 0 } }, "28": { "gem_id": "28", "naam": "Súdwest-Fryslân", "sinds": "2018", "checks": [], "scores": { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "72": { "gem_id": "72", "naam": "Opsterland", "sinds": "2024", "checks": ["cb1_24501", "cb1_24502", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24509", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb3_24516", "cb3_24517", "cb3_24518", "cb4_24519", "cb4_24520", "cb4_24521", "cb5_24522", "cb5_24523", "cb5_24524", "cb6_24525", "cb6_24526", "cb6_24527", "cb6_24528", "cb7_24529"], "scores": { "1": 5, "2": 4, "3": 8, "4": 3, "5": 3, "6": 4, "7": 1, "8": 0, "9": 0, "10": 0 } }, "52": { "gem_id": "52", "naam": "Zeewolde", "sinds": "2023", "checks": ["cb1_24501", "cb1_24502", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24509", "cb2_24510", "cb3_24514", "cb3_24515"], "scores": { "1": 4, "2": 4, "3": 2, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "25": { "gem_id": "25", "naam": "Schouwen-Duiveland", "sinds": "2022", "checks": ["cb1_24501", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24509", "cb3_24511", "cb3_24512", "cb5_24522", "cb5_24523", "cb5_24524"], "scores": { "1": 2, "2": 4, "3": 2, "4": 0, "5": 3, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "90": { "gem_id": "90", "naam": "testgemeente", "sinds": null, "checks": ["cb1_24501", "cb1_24503", "cb1_24505", "cb1_24612", "cb2_24506", "cb8_24532", "cb8_24533"], "scores": { "1": 4, "2": 1, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 2, "9": 0, "10": 0 } }, "21": { "gem_id": "21", "naam": "Oldambt", "sinds": "2022", "checks": ["cb1_24501", "cb1_24502", "cb1_24504", "cb1_24612", "cb2_24506", "cb2_24507", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515"], "scores": { "1": 4, "2": 2, "3": 5, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "107": { "gem_id": "107", "naam": "West Betuwe", "sinds": "2025", "checks": ["cb1_24501", "cb1_24502", "cb1_24505", "cb1_24612", "cb2_24506"], "scores": { "1": 4, "2": 1, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "81": { "gem_id": "81", "naam": "Wassenaar", "sinds": "2024", "checks": ["cb1_24501", "cb1_24502", "cb1_24503", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24509", "cb2_24510", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb3_24516", "cb3_24517", "cb3_24518", "cb4_24519", "cb4_24520", "cb4_24521", "cb5_24522", "cb5_24523", "cb5_24524", "cb6_24525", "cb6_24526", "cb6_24527"], "scores": { "1": 6, "2": 5, "3": 8, "4": 3, "5": 3, "6": 3, "7": 0, "8": 0, "9": 0, "10": 0 } }, "66": { "gem_id": "66", "naam": "Hattem", "sinds": "2024", "checks": ["cb1_24501", "cb1_24502", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24507", "cb2_24508", "cb2_24509", "cb3_24512", "cb3_24513", "cb3_24516", "cb3_24517", "cb3_24518", "cb4_24519", "cb5_24522", "cb5_24523", "cb5_24524", "cb6_24525", "cb6_24526", "cb6_24527", "cb6_24528", "cb7_24529", "cb7_24530"], "scores": { "1": 5, "2": 3, "3": 5, "4": 1, "5": 3, "6": 4, "7": 2, "8": 0, "9": 0, "10": 0 } }, "18": { "gem_id": "18", "naam": "Maastricht", "sinds": "2022", "checks": ["cb1_24501", "cb1_24502", "cb1_24504", "cb1_24505", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb3_24516", "cb3_24517"], "scores": { "1": 4, "2": 0, "3": 7, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "43": { "gem_id": "43", "naam": "Barneveld", "sinds": "2023", "checks": ["cb1_24501", "cb1_24502", "cb1_24503", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24509", "cb2_24510", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb3_24516", "cb3_24517", "cb3_24518", "cb4_24519", "cb4_24521", "cb5_24522", "cb5_24523", "cb5_24524", "cb6_24525", "cb6_24526", "cb6_24527", "cb6_24528", "cb7_24530", "cb8_24532", "cb8_24533", "cb8_24534", "cb9_24535", "cb9_24536", "cb9_24537", "cb10_24538", "cb10_24539", "cb10_24541"], "scores": { "1": 6, "2": 5, "3": 7, "4": 2, "5": 3, "6": 4, "7": 1, "8": 3, "9": 3, "10": 3 } }, "46": { "gem_id": "46", "naam": "Ooststellingwerf", "sinds": "2023", "checks": [], "scores": { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "26": { "gem_id": "26", "naam": "Smallingerland", "sinds": "2023", "checks": ["cb1_24501", "cb1_24502", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24509", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb3_24516", "cb3_24517", "cb3_24518", "cb4_24519", "cb4_24521", "cb5_24522", "cb5_24523", "cb5_24524", "cb6_24525", "cb6_24526", "cb6_24527", "cb6_24528", "cb7_24529", "cb7_24530", "cb8_24532", "cb8_24533", "cb8_24534"], "scores": { "1": 3, "2": 4, "3": 7, "4": 2, "5": 3, "6": 4, "7": 2, "8": 3, "9": 0, "10": 0 } }, "54": { "gem_id": "54", "naam": "Veenendaal", "sinds": "2024", "checks": ["cb1_24501", "cb1_24502", "cb1_24503", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24509", "cb2_24510", "cb3_24514", "cb3_24515", "cb4_24519", "cb5_24522", "cb5_24523", "cb5_24524", "cb6_24525", "cb6_24526", "cb6_24527", "cb6_24528", "cb7_24529", "cb7_24530", "cb8_24532", "cb8_24534"], "scores": { "1": 6, "2": 5, "3": 2, "4": 1, "5": 3, "6": 4, "7": 2, "8": 2, "9": 0, "10": 0 } }, "92": { "gem_id": "92", "naam": "Oirschot", "sinds": "2025", "checks": ["cb1_24501", "cb1_24502", "cb1_24612", "cb2_24507", "cb2_24509", "cb2_24510", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb3_24516", "cb3_24517", "cb3_24518", "cb4_24519", "cb4_24520", "cb4_24521", "cb5_24522", "cb5_24523"], "scores": { "1": 3, "2": 3, "3": 8, "4": 3, "5": 2, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "101": { "gem_id": "101", "naam": "Lingewaard", "sinds": "2025", "checks": ["cb1_24501", "cb1_24502", "cb1_24612", "cb2_24509", "cb2_24510"], "scores": { "1": 3, "2": 2, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "7": { "gem_id": "7", "naam": "Edam-Volendam", "sinds": "2023", "checks": ["cb1_24501", "cb1_24502", "cb1_24503", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24509", "cb2_24510", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515"], "scores": { "1": 6, "2": 5, "3": 5, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "95": { "gem_id": "95", "naam": "Krimpenerwaard", "sinds": "2025", "checks": ["cb1_24501", "cb1_24502", "cb1_24503", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24509", "cb2_24510", "cb3_24512", "cb3_24514"], "scores": { "1": 6, "2": 5, "3": 2, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "37": { "gem_id": "37", "naam": "Noardeast-Fryslân", "sinds": "2023", "checks": ["cb1_24501", "cb1_24502", "cb1_24503", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24510", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb3_24516", "cb3_24517", "cb3_24518", "cb4_24519", "cb4_24520", "cb4_24521", "cb5_24522", "cb5_24523", "cb5_24524", "cb6_24525", "cb6_24526", "cb6_24527", "cb6_24528", "cb9_24535"], "scores": { "1": 6, "2": 4, "3": 8, "4": 3, "5": 3, "6": 4, "7": 0, "8": 0, "9": 1, "10": 0 } }, "19": { "gem_id": "19", "naam": "Nijkerk", "sinds": "2023", "checks": ["cb1_24501", "cb1_24502", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24510", "cb3_24514", "cb3_24515", "cb7_24529", "cb7_24530"], "scores": { "1": 5, "2": 3, "3": 2, "4": 0, "5": 0, "6": 0, "7": 2, "8": 0, "9": 0, "10": 0 } }, "17": { "gem_id": "17", "naam": "Kampen", "sinds": "2023", "checks": ["cb1_24501", "cb1_24502", "cb1_24503", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24509", "cb2_24510", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb3_24516", "cb3_24517", "cb3_24518", "cb4_24519", "cb4_24520", "cb4_24521", "cb5_24522", "cb5_24523", "cb5_24524", "cb6_24525", "cb6_24526", "cb6_24527", "cb6_24528", "cb7_24529", "cb7_24530", "cb8_24532", "cb8_24533", "cb8_24534", "cb9_24535", "cb9_24536", "cb9_24537", "cb10_24538", "cb10_24539", "cb10_24540", "cb10_24541"], "scores": { "1": 6, "2": 5, "3": 8, "4": 3, "5": 3, "6": 4, "7": 2, "8": 3, "9": 3, "10": 4 } }, "104": { "gem_id": "104", "naam": "Moerdijk", "sinds": "2025", "checks": ["cb1_24501", "cb1_24502", "cb1_24504", "cb1_24612", "cb2_24508", "cb2_24509", "cb2_24510", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514"], "scores": { "1": 4, "2": 3, "3": 4, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 } }, "69": { "gem_id": "69", "naam": "Neder-Betuwe", "sinds": "2024", "checks": ["cb1_24501", "cb1_24502", "cb1_24503", "cb1_24504", "cb1_24505", "cb1_24612", "cb2_24506", "cb2_24507", "cb2_24508", "cb2_24509", "cb2_24510", "cb3_24511", "cb3_24512", "cb3_24513", "cb3_24514", "cb3_24515", "cb3_24516", "cb3_24517", "cb3_24518", "cb4_24519", "cb4_24521", "cb5_24522", "cb5_24523", "cb5_24524", "cb6_24525", "cb6_24526", "cb6_24527", "cb6_24528", "cb7_24529", "cb7_24530"], "scores": { "1": 6, "2": 5, "3": 8, "4": 2, "5": 3, "6": 4, "7": 2, "8": 0, "9": 0, "10": 0 } } }];;
+        // Maak vlakke array van gemeenten
+        const gemeenten = Object.values(gemeentenData[0]);
+
+        const itemlabels = [{
+            "cb1_24612": "Stel een gemeentelijk projectleider aan",
+            "cb1_24501": "Richt een kernteam op",
+            "cb1_24502": "Baken het implementatiegebied af",
+            "cb1_24503": "Maak een communicatieplan",
+            "cb1_24504": "Maak een planning voor de komende cyclus",
+            "cb1_24505": "Maak een plan van aanpak",
+            "cb2_24506": "Voer de stakeholderanalyse uit",
+            "cb2_24507": "Organiseer een startbijeenkomst met lokale partners",
+            "cb2_24508": "Breng in kaart welke relevante acties binnen elk OKO-domein al in de gemeente worden uitgevoerd",
+            "cb2_24509": "Zorg voor voldoende financiële middelen in de gemeentebegroting voor de komende jaren",
+            "cb2_24510": "Maak afspraken met (subsidie)partners over hun inzet voor OKO voor de komende jaren",
+            "cb3_24511": "Check de evaluatie van de vorige monitor (indien deze heeft plaatsgevonden)",
+            "cb3_24512": "Organiseer een voorbereidend overleg met het kernteam en de GGD-onderzoeker over de uitvoering van de monitor",
+            "cb3_24513": "Maak afspraken met de GGD-onderzoeker over de afname van de monitor",
+            "cb3_24514": "Leg contact met elke vo-school (en eventueel mbo-school) in je gemeente over de uitvoering van de OKO-monitor",
+            "cb3_24515": "Benader voldoende scholen om minstens 80% van de jongeren uit de gemeente te bevragen",
+            "cb3_24516": "Informeer docenten over de uitvoering van de monitor",
+            "cb3_24517": "Informeer ouders over de uitvoering van de monitor",
+            "cb3_24518": "Informeer leerlingen over de uitvoering van de monitor",
+            "cb4_24519": "Neem de monitor af op de deelnemende scholen",
+            "cb4_24520": "Minstens 80% van de jongeren uit de gemeente heeft de monitor ingevuld",
+            "cb4_24521": "Evalueer de monitor",
+            "cb5_24522": "Stem met de GGD-onderzoeker af over diens rol in de voorbereidingssessie en de dialoogsessie",
+            "cb5_24523": "Organiseer een voorbereidingssessie voor de dialoogsessie",
+            "cb5_24524": "Nodig de lokale partners, de GGD, de wethouder en de OKO-adviseur uit voor de dialoogsessie",
+            "cb6_24525": "Organiseer een dialoogsessie met lokale partners",
+            "cb6_24526": "Bespreek de resultaten met lokale partners tijdens de dialoogsessie",
+            "cb6_24527": "Stel een top drie van speerpunten vast op basis van de dialoog over de cijfers",
+            "cb6_24528": "Verken welke partners op welke manier willen meewerken aan OKO",
+            "cb7_24529": "Stel per speerpunt een werkgroep samen van betrokken partners",
+            "cb7_24530": "Formuleer per speerpunt een concreet doel",
+            "cb8_24532": "Controleer of de beoogde activiteiten\/interventies in het uitvoeringsplan aansluiten bij OKO",
+            "cb8_24533": "Zorg dat er voldoende middelen (financiën en menskracht) beschikbaar zijn voor het uitvoeren van de plannen",
+            "cb8_24534": "Stel een overkoepelend uitvoeringsplan op met de speerpunten, bijbehorende doelen en de activiteiten",
+            "cb9_24535": "Maak afspraken over de uitvoering van de activiteiten",
+            "cb9_24536": "Monitor de activiteiten tijdens de implementatie",
+            "cb9_24537": "Evalueer de activiteiten en stel bij waar nodig",
+            "cb10_24538": "Organiseer een evaluatiebijeenkomst met het kernteam",
+            "cb10_24539": "Evalueer het plan van aanpak en pas aan waar nodig",
+            "cb10_24540": "Evalueer het communicatieplan en pas aan waar nodig",
+            "cb10_24541": "Maak een planning voor de komende cyclus"
+        }];
+        const container = d3.select("#visualisatie");
+        const select = d3.select("#filterJaar");
+        const tooltip = d3.select("#tooltip");
+        const detailBox = d3.select("#details");
+
+        const uniekeJaren = [...new Set(gemeenten.map(g => g.sinds).filter(Boolean))].sort();
+        uniekeJaren.forEach(jaar => {
+            select.append("option").attr("value", jaar).text(jaar);
+        });
+        select.on("change", function () {
+            const jaar = this.value;
+            render(gemeenten.filter(g => !jaar || g.sinds === jaar));
+        });
+
+        function render(data) {
+            container.html("");
+            const margin = { top: 80, right: 10, bottom: 50, left: 150 };
+            const cellSize = 30;
+            const width = 700;
+            const height = cellSize * data.length + margin.top + margin.bottom;
+
+            const steps = Object.keys(maxScores);
+            const svg = container.append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleBand().domain(steps).range([0, width]).padding(0.05);
+            const y = d3.scaleBand().domain(data.map(d => d.naam)).range([0, cellSize * data.length]).padding(0.05);
+
+            const color = d3.scaleLinear().domain([0, 1]).range(["#ffffff", "#1f77b4"]);
+
+            svg.append("g").attr("class", "axis").call(d3.axisLeft(y));
+            svg.append("g").attr("class", "axis").attr("transform", `translate(0, ${cellSize * data.length})`).call(d3.axisBottom(x));
+
+            svg.selectAll(".cell")
+                .data(data.flatMap(gem => steps.map(step => {
+                    const score = gem.scores[step] || 0;
+                    const perc = score / maxScores[step];
+                    return { gemeente: gem.naam, step, score, perc, checks: gem.checks || [] };
+                })))
+                .enter()
+                .append("rect")
+                .attr("x", d => x(d.step))
+                .attr("y", d => y(d.gemeente))
+                .attr("width", x.bandwidth())
+                .attr("height", y.bandwidth())
+                .attr("fill", d => color(d.perc))
+                .on("mouseover", function (event, d) {
+                    tooltip.style("opacity", 1)
+                        .html(`<strong>${d.gemeente}</strong><br>${stepNames[d.step]}<br>Score: ${d.score}/${maxScores[d.step]} (${Math.round(d.perc * 100)}%)`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", () => tooltip.style("opacity", 0))
+                .on("click", function (event, d) {
+                    const prefix = stepPrefixes[d.step];
+                    const allStepItems = Object.keys(itemlabels[0]).filter(c => c.startsWith(prefix));
+                    const checked = d.checks.filter(c => c.startsWith(prefix));
+                    const unchecked = allStepItems.filter(c => !checked.includes(c));
+
+                    const checkedList = checked.map(c => itemlabels[0][c] || c);
+                    const uncheckedList = unchecked.map(c => itemlabels[0][c] || c);
+
+                    const content = `<h3>${d.gemeente} – ${stepNames[d.step]}</h3>` +
+                        `<p><strong>${d.score}/${maxScores[d.step]} items</strong> aangevinkt (${Math.round(d.perc * 100)}%)</p>` +
+                        `<h4>Aangevinkt:</h4>` +
+                        (checkedList.length ? `<ul>${checkedList.map(i => `<li>${i}</li>`).join('')}</ul>` : `<p>Geen</p>`) +
+                        `<h4>Niet aangevinkt:</h4>` +
+                        (uncheckedList.length ? `<ul>${uncheckedList.map(i => `<li>${i}</li>`).join('')}</ul>` : `<p>Geen</p>`);
+
+                    detailBox.html(content);
+                });
+
+
+            phaseDefs.forEach(fase => {
+                const xStart = x(fase.steps[0]);
+                const xEnd = x(fase.steps[fase.steps.length - 1]) + x.bandwidth();
+                if (xStart !== undefined && xEnd !== undefined) {
+                    svg.append("line")
+                        .attr("x1", xStart)
+                        .attr("x2", xEnd)
+                        .attr("y1", -30)
+                        .attr("y2", -30)
+                        .attr("class", "phase-line");
+
+                    svg.append("text")
+                        .attr("x", (xStart + xEnd) / 2)
+                        .attr("y", -35)
+                        .attr("class", "phase-label")
+                        .text(fase.name);
+                }
+            });
+        }
+
+        render(gemeenten);
+    </script>
+</body>
+
+</html>
