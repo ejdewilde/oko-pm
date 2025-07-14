@@ -72,7 +72,15 @@ function render(data) {
         .data(data.flatMap(gem => steps.map(step => {
             const score = gem.scores[step] || 0;
             const perc = score / maxScores[step];
-            return { gemeente: gem.naam, step, score, perc, checks: gem.checks || [] };
+            return {
+                gemeente: gem.naam,
+                invuller: gem.invuller || "-",
+                datum: gem.datum || "-",
+                step,
+                score,
+                perc,
+                checks: gem.checks || []
+            };
         })))
         .enter()
         .append("rect")
@@ -102,6 +110,8 @@ function render(data) {
 
             const checkedList = checked.map(c => itemlabels[0][c] || c);
             const uncheckedList = unchecked.map(c => itemlabels[0][c] || c);
+            document.getElementById("invullerNaam").textContent = d.invuller || "-";
+            document.getElementById("invulDatum").textContent = formatDatum(d.datum) || "-";
 
             const content = `<h3>${d.gemeente}</h3><h2>${stepNames[d.step]}</h2>` +
                 `<p><strong>${d.score} van de ${maxScores[d.step]} items</strong> aangevinkt (${Math.round(d.perc * 100)}%)</p>` +
@@ -138,4 +148,16 @@ function decodeHtml(html) {
     txt.innerHTML = html;
     return txt.value;
 }
+function formatDatum(input) {
+    const d = new Date(input);
+    return d.toLocaleString('nl-NL', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).replace(' om', ' om'); // optioneel: 'om' ertussen
+}
+
 render(gemeenten);

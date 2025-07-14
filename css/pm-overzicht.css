@@ -28,6 +28,17 @@ body {
   opacity: 0;
   z-index: 9999;
 }
+.meta-info {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #f2f2f2;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+.meta-info p {
+  margin: 0.3em 0;
+  font-size: 0.9em;
+}
 
 .phase-label {
   font-weight: bold;

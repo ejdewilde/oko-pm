@@ -9,7 +9,7 @@
  * @license      GPL v2 or later
  * Plugin Name:  OKO procesmonitor
  * Description:  Visuals for Oprgroeien in een Kansrijke Omgeving: de procestool. This plugin depends on Fluent CRM to be installed and active.
- * Version:      1.8
+ * Version:      1.8.1
  * Plugin URI:   https://www.hansei.nl/plugins
  * Author:       Erik Jan de Wilde, (c) 2024, HanSei
  * Text Domain:  oko-pm

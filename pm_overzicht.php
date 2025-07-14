@@ -57,6 +57,10 @@ class PM_overzicht
             </select>
             <hr>
         </div>
+        <div id="metaInfo" class="meta-info">
+            <p><strong>Laatst bijgewerkt door:</strong> <span id="invullerNaam">–</span></p>
+            <p><strong>Datum:</strong> <span id="invulDatum">–</span></p>
+        </div>
         <div id="detailContent">
             Klik op een vakje om meer informatie te tonen.
         </div>
@@ -129,19 +133,37 @@ class PM_overzicht
 
     public function kweer()
     {
-        $sql = "select g.naam, l.gem_id, g.startjaar, t.meta_value as checks from
-(select gem_id, max(archiefUnix) as dat from tool_usermeta group by gem_id) l
-inner join oko_gemeenten g on l.gem_id=g.id
-inner join tool_usermeta t on l.dat = t.archiefUniX
-order by g.naam";
-        $data  = $this->poke_wpdb($sql, "get_results");
+        $sql = "SELECT
+  g.naam,
+  g.id AS gem_id,
+  g.startjaar,
+  w.display_name AS invuller,
+  FROM_UNIXTIME(t.archiefUnix) AS datum,
+  t.meta_value AS checks
+FROM oko_gemeenten g
+JOIN (
+    SELECT gem_id, MAX(archiefUnix) AS laatste
+    FROM tool_usermeta
+    GROUP BY gem_id
+) AS laatste_invoer ON g.id = laatste_invoer.gem_id
+JOIN tool_usermeta t ON t.gem_id = laatste_invoer.gem_id AND t.archiefUnix = laatste_invoer.laatste
+LEFT JOIN wp_users w ON t.user_id = w.ID
+WHERE g.naam <> 'testgemeente'
+";
+
+        $data = $this->poke_wpdb($sql, "get_results");
+        ts($sql);
+        ts($data);
         $terug = [];
         foreach ($data as $row) {
-            $terug[$row["gem_id"]]["gem_id"] = $row["gem_id"];
-            $terug[$row["gem_id"]]["naam"]   = $row["naam"];
-            $terug[$row["gem_id"]]["sinds"]  = $row["startjaar"];
-            $terug[$row["gem_id"]]["checks"] = $this->select_checks($row["checks"]);
-            $terug[$row["gem_id"]]["scores"] = $this->maak_scores($row["checks"]);
+            $terug[$row["gem_id"]]["gem_id"]   = $row["gem_id"];
+            $terug[$row["gem_id"]]["naam"]     = $row["naam"];
+            $terug[$row["gem_id"]]["sinds"]    = $row["startjaar"];
+            $terug[$row["gem_id"]]["checks"]   = $this->select_checks($row["checks"]);
+            $terug[$row["gem_id"]]["scores"]   = $this->maak_scores($row["checks"]);
+            $terug[$row["gem_id"]]["invuller"] = $row["invuller"];
+            $terug[$row["gem_id"]]["datum"]    = $row["datum"];
+
         }
         return $terug;
     }
