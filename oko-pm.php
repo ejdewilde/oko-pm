@@ -280,7 +280,7 @@ class OKO_pm
     public function haal_laatste_score($gid)
     {
         $sql = "SELECT * FROM tool_usermeta WHERE gem_id = " . $gid . " AND archiefUnix IS NOT NULL ORDER BY umeta_id DESC LIMIT 1";
-        ts($sql);
+        //ts($sql);
         $data = $this->poke_wpdb($sql, "get_row");
         return $data;
     }
