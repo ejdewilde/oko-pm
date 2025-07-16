@@ -51,7 +51,7 @@ function render(data) {
     const x = d3.scaleBand().domain(steps).range([0, width]).padding(0.05);
     const y = d3.scaleBand().domain(data.map(d => d.naam)).range([0, cellSize * data.length]).padding(0.05);
 
-    const color = d3.scaleLinear().domain([0, 1]).range(["#ffffff", "#1f77b4"]);
+    const color = d3.scaleLinear().domain([0, 1]).range(["#ffffff", "#3db28f"]);
     // 1. Sorteer de vlakke array voordat je hem aan D3 overdraagt
     gemeenten.sort((a, b) => {
         // lege/NULL jaren helemaal naar het einde
@@ -66,7 +66,36 @@ function render(data) {
     });
 
     svg.append("g").attr("class", "axis").call(d3.axisLeft(y));
-    svg.append("g").attr("class", "axis").attr("transform", `translate(0, ${cellSize * data.length})`).call(d3.axisBottom(x));
+    //svg.append("g").attr("class", "axis").attr("transform", `translate(0, ${cellSize * data.length})`).call(d3.axisBottom(x));
+    // Voeg stapnummers toe boven de cellen
+    svg.append("g")
+        .attr("class", "step-labels")
+        .selectAll("text")
+        .data(steps)
+        .enter()
+        .append("text")
+        .attr("x", d => x(d) + x.bandwidth() / 2)
+        .attr("y", -10)  // Tussen fase-labels (-35) en fase-lijn (-30)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "11px")
+        .attr("fill", "#333")
+        .text(d => d);
+    // Linkerlabels 'Fase' en 'Stap'
+    svg.append("text")
+        .attr("x", -10)
+        .attr("y", -35)  // Op dezelfde hoogte als de fase-labels
+        .attr("text-anchor", "end")
+        .attr("font-weight", "bold")
+        .attr("font-size", "12px")
+        .text("Fase");
+
+    svg.append("text")
+        .attr("x", -10)
+        .attr("y", -10)  // Op dezelfde hoogte als stapnummers
+        .attr("text-anchor", "end")
+        .attr("font-weight", "bold")
+        .attr("font-size", "12px")
+        .text("Stap");
 
     svg.selectAll(".cell")
         .data(data.flatMap(gem => steps.map(step => {

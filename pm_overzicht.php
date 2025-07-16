@@ -152,8 +152,8 @@ WHERE g.naam <> 'testgemeente'
 ";
 
         $data = $this->poke_wpdb($sql, "get_results");
-        ts($sql);
-        ts($data);
+        //ts($sql);
+        //ts($data);
         $terug = [];
         foreach ($data as $row) {
             $terug[$row["gem_id"]]["gem_id"]   = $row["gem_id"];
