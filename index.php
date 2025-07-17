@@ -69,9 +69,16 @@ function oko_pm_shortcode()
 }
 function pm_overzicht_shortcode()
 {
-    include_once "pm_overzicht.php";
-    $wat = new PM_overzicht();
-    $ta  = $wat->get_interface();
+
+    include_once "oko-security.php";
+    $ef = new OKO_check();
+    $ok = $ef->check_het();
+    //echo $ok;
+    if ($ok) {
+        include_once "pm_overzicht.php";
+        $wat = new PM_overzicht();
+        $ta  = $wat->get_interface();
+    }
 }
 
 function oko_pm_register_shortcode()
